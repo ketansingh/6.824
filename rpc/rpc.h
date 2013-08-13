@@ -10,6 +10,7 @@
 #include "thr_pool.h"
 #include "marshall.h"
 #include "connection.h"
+#include "unistd.h"
 
 #ifdef DMALLOC
 #include "dmalloc.h"
