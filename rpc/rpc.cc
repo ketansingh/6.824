@@ -661,9 +661,61 @@ rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 		unsigned int xid_rep, char **b, int *sz)
 {
 	ScopedLock rwl(&reply_window_m_);
+	
+	std::map<unsigned int, std::list<reply_t> >::iterator window_it; 
+	rpcs::rpcstate_t return_val;
 
+	if((window_it=reply_window_.find(clt_nonce))!=reply_window_.end())
+	{
+		std::list<reply_t>::iterator reply_t_it;
+		bool xid_not_present = true;
+		for (reply_t_it = (window_it->second).begin(); reply_t_it != (window_it->second).end(); reply_t_it++)
+		{
+
+			if(reply_t_it->xid == xid)
+			{
+				xid_not_present = false;
+				//return value checks
+				if(reply_t_it->cb_present == true)
+				{
+					if(reply_t_it->buf!=NULL)
+					{
+						b = &(reply_t_it->buf);
+						sz = &(reply_t_it->sz);
+						return_val = DONE;
+					}
+					else
+					{
+						//cb_present true but buf freed.
+						return_val = FORGOTTEN;
+					}
+				}
+
+				else if(reply_t_it->cb_present == false)
+				{
+					//cb_present false but xid added to the window
+					return_val = INPROGRESS;
+				}
+			}
+			
+
+			//delete requests with XIDs <= xid_rep
+			if(reply_t_it->xid <= xid_rep)
+			{
+				free(reply_t_it->buf);
+			}
+		}
+		if(xid_not_present == true)
+		{
+			//remembers xid to the window
+			struct reply_t curr_reply(xid);
+			(window_it->second).push_back(curr_reply);
+			return_val = NEW;
+		}
+
+	}
         // You fill this in for Lab 1.
-	return NEW;
+	return return_val;
 }
 
 // rpcs::dispatch calls add_reply when it is sending a reply to an RPC,

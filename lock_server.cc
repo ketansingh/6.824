@@ -44,7 +44,7 @@ lock_server::acquire(int clt, lock_protocol::lockid_t lid, int &r)
   pthread_mutex_lock (&locks_mutex);
   //print_map(locks);
 
-  if(locks.find(lid)!=locks.end() && locks[lid]==1)
+  if(locks.find(lid)!=locks.end())
   {
   	while(locks[lid]==1)
   	{
@@ -52,7 +52,6 @@ lock_server::acquire(int clt, lock_protocol::lockid_t lid, int &r)
   	}
   	
   }
-  
   
   //acquire lock
   locks[lid]=1;
