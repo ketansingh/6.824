@@ -729,6 +729,25 @@ rpcs::add_reply(unsigned int clt_nonce, unsigned int xid,
 {
 	ScopedLock rwl(&reply_window_m_);
         // You fill this in for Lab 1.
+	std::map<unsigned int, std::list<reply_t> >::iterator window_it;
+
+	if((window_it=reply_window_.find(clt_nonce))!=reply_window_.end())
+	{
+		std::list<reply_t>::iterator reply_t_it;
+
+		for (reply_t_it = (window_it->second).begin(); reply_t_it != (window_it->second).end(); reply_t_it++)
+		{
+			if(reply_t_it->xid == xid)
+			{
+				reply_t_it->cb_present = true;
+				reply_t_it->buf = b;
+				reply_t_it->sz = sz;
+				break;
+			}
+		}
+
+	}
+
 }
 
 void
