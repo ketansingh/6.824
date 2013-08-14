@@ -189,7 +189,6 @@ int
 rpcc::call1(unsigned int proc, marshall &req, unmarshall &rep,
 		TO to)
 {
-
 	caller ca(0, &rep);
         int xid_rep;
 	{
@@ -223,6 +222,7 @@ rpcc::call1(unsigned int proc, marshall &req, unmarshall &rep,
 
 	bool transmit = true;
 	connection *ch = NULL;
+
 
 	while (1){
 		if(transmit){
@@ -656,22 +656,23 @@ rpcs::dispatch(djob_t *j)
 //   INPROGRESS: seen this xid, and still processing it.
 //   DONE: seen this xid, previous reply returned in *b and *sz.
 //   FORGOTTEN: might have seen this xid, but deleted previous reply.
+
 rpcs::rpcstate_t 
 rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 		unsigned int xid_rep, char **b, int *sz)
 {
 	ScopedLock rwl(&reply_window_m_);
-	
+
 	std::map<unsigned int, std::list<reply_t> >::iterator window_it; 
-	rpcs::rpcstate_t return_val;
+	rpcs::rpcstate_t return_val=FORGOTTEN;
 
 	if((window_it=reply_window_.find(clt_nonce))!=reply_window_.end())
 	{
 		std::list<reply_t>::iterator reply_t_it;
 		bool xid_not_present = true;
+		
 		for (reply_t_it = (window_it->second).begin(); reply_t_it != (window_it->second).end(); reply_t_it++)
 		{
-
 			if(reply_t_it->xid == xid)
 			{
 				xid_not_present = false;
@@ -700,11 +701,17 @@ rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 			
 
 			//delete requests with XIDs <= xid_rep
+			
 			if(reply_t_it->xid <= xid_rep)
 			{
-				free(reply_t_it->buf);
+				char * free_this = reply_t_it->buf;
+				reply_t_it->buf = NULL;
+				reply_t_it->sz = 0;
+				free(free_this);
 			}
+
 		}
+
 		if(xid_not_present == true)
 		{
 			//remembers xid to the window
