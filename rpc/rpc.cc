@@ -581,7 +581,7 @@ rpcs::dispatch(djob_t *j)
 		// this client does not require at most once logic
 		stat = NEW;
 	}
-
+	
 	switch (stat){
 		case NEW: // new request
 			if(counting_){
@@ -681,8 +681,8 @@ rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 				{
 					if(reply_t_it->buf!=NULL)
 					{
-						b = &(reply_t_it->buf);
-						sz = &(reply_t_it->sz);
+						*b = (reply_t_it->buf);
+						*sz = (reply_t_it->sz);
 						return_val = DONE;
 					}
 					else
@@ -700,6 +700,13 @@ rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 			}
 			
 
+		}
+
+
+		
+		for (reply_t_it = (window_it->second).begin(); reply_t_it != (window_it->second).end(); reply_t_it++)
+		{
+			
 			//delete requests with XIDs <= xid_rep
 			
 			if(reply_t_it->xid <= xid_rep)
@@ -709,8 +716,10 @@ rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 				reply_t_it->sz = 0;
 				free(free_this);
 			}
-
 		}
+		
+
+		
 
 		if(xid_not_present == true)
 		{
@@ -719,6 +728,7 @@ rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 			(window_it->second).push_back(curr_reply);
 			return_val = NEW;
 		}
+		
 
 	}
         // You fill this in for Lab 1.
@@ -736,6 +746,7 @@ rpcs::add_reply(unsigned int clt_nonce, unsigned int xid,
 {
 	ScopedLock rwl(&reply_window_m_);
         // You fill this in for Lab 1.
+	
 	std::map<unsigned int, std::list<reply_t> >::iterator window_it;
 
 	if((window_it=reply_window_.find(clt_nonce))!=reply_window_.end())
@@ -744,6 +755,7 @@ rpcs::add_reply(unsigned int clt_nonce, unsigned int xid,
 
 		for (reply_t_it = (window_it->second).begin(); reply_t_it != (window_it->second).end(); reply_t_it++)
 		{
+
 			if(reply_t_it->xid == xid)
 			{
 				reply_t_it->cb_present = true;
