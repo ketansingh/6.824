@@ -681,6 +681,10 @@ rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 				{
 					if(reply_t_it->buf!=NULL)
 					{
+<<<<<<< HEAD
+=======
+						//might need complete copy of buffer, in case buf is freed later on
+>>>>>>> b4c9cffa3d049da2425c6d66cedeb01ae8236111
 						*b = (reply_t_it->buf);
 						*sz = (reply_t_it->sz);
 						return_val = DONE;
